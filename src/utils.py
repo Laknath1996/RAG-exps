@@ -105,7 +105,6 @@ class Library:
         # Increment the current book
         self.current += 1
 
-        # TODO: return the remaining books as well
         return dict(train_data=train_data, eval_data=eval_data, metadata=metadata)
 
     def reset(self):
