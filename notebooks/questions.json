@@ -1,0 +1,112 @@
+[
+  {
+    "question": "Why does Harry live with the Dursleys?",
+    "options": {
+      "A": "He is an orphan and they are his closest living relatives.",
+      "B": "He chose to live with them after his parents' death.",
+      "C": "They adopted him after his parents abandoned him.",
+      "D": "He is their biological son, but they keep it a secret."
+    },
+    "answer": "A",
+    "explanation": "The history explains that Harry's parents, the Potters, died and the Dursleys are his only remaining family."
+  },
+  {
+    "question": "Why are the Dursleys reluctant to take Harry to the zoo?",
+    "options": {
+      "A": "They dislike zoos and prefer other outings.",
+      "B": "They are worried Harry will misbehave in public.",
+      "C": "They cannot afford the zoo entrance fees.",
+      "D": "They fear Harry's presence will somehow ruin Dudley's birthday."
+    },
+    "answer": "D",
+    "explanation": "The context shows they're mainly concerned with keeping Dudley happy and consider Harry a nuisance."
+  },
+  {
+    "question": "What is the Dursleys' biggest secret?",
+    "options": {
+      "A": "Mr. Dursley's illegal business dealings.",
+      "B": "Their connection to the magical world through Mrs. Dursley's sister.",
+      "C": "Dudley's poor academic performance at school.",
+      "D": "A hidden treasure they found in their garden."
+    },
+    "answer": "B",
+    "explanation": "The history establishes Mrs. Dursley's sister is Mrs. Potter, linking them to Harry and the magical events."
+  },
+  {
+    "question": "What is Harry's scar shaped like?",
+    "options": {
+      "A": "A star.",
+      "B": "A crescent moon.",
+      "C": "A lightning bolt.",
+      "D": "A skull."
+    },
+    "answer": "C",
+    "explanation": "Both history and context mention the lightning bolt shaped scar."
+  },
+  {
+    "question": "Why does Uncle Vernon yell at Harry about motorcycles?",
+    "options": {
+      "A": "Harry crashed his motorcycle.",
+      "B": "Harry was riding a motorcycle recklessly.",
+      "C": "Harry mentioned a flying motorcycle in his dream, which Vernon finds absurd.",
+      "D": "Harry wants a motorcycle, which Vernon disapproves of."
+    },
+    "answer": "C",
+    "explanation": "The context explains Vernon's outburst followed Harry's dream about a flying motorcycle."
+  },
+  {
+    "question": "How did Harry get his scar?",
+    "options": {
+      "A": "Dudley hit him with a rock.",
+      "B": "He fell off his bicycle.",
+      "C": "It is the result of Voldemort's attack, the same attack that killed his parents.",
+      "D": "He was injured in the car crash that killed his parents, according to the Dursleys."
+    },
+    "answer": "C",
+    "explanation": "The history details Voldemort's attack and its connection to the scar, although the Dursleys claim it was a car crash."
+  },
+  {
+    "question": "Who is Mrs. Figg?",
+    "options": {
+      "A": "Dudley's teacher.",
+      "B": "Aunt Petunia's best friend.",
+      "C": "A neighbor whom the Dursleys leave Harry with.",
+      "D": "Harry's grandmother."
+    },
+    "answer": "C",
+    "explanation": "The context identifies Mrs. Figg as the person Harry is usually left with."
+  },
+  {
+    "question": "Why is Harry used to spiders?",
+    "options": {
+      "A": "He keeps them as pets.",
+      "B": "He plays in the garden often.",
+      "C": "He sleeps in the cupboard under the stairs, which is full of spiders.",
+      "D": "He studies them for school projects."
+    },
+    "answer": "C",
+    "explanation": "The context mentions Harry finding spiders on his socks because he sleeps in the cupboard under the stairs."
+  },
+  {
+    "question": "What unusual events occurred on the day Harry was left on the Dursleys' doorstep?",
+    "options": {
+      "A": "A heavy snowfall in July and a flock of parrots.",
+      "B": "A solar eclipse and a swarm of butterflies.",
+      "C": "Shooting stars and owls flying in daylight.",
+      "D": "A hailstorm and a migration of ladybugs."
+    },
+    "answer": "C",
+    "explanation": "The history specifically mentions the shooting stars and owls flying during the day, celebrating Voldemort's downfall."
+  },
+  {
+    "question": "Why are strangers sometimes nice to Harry?",
+    "options": {
+      "A": "They recognize him as a celebrity.",
+      "B": "They are members of the wizarding world who know his true identity.",
+      "C": "They mistake him for another child.",
+      "D": "They feel sorry for him because of his old clothes."
+    },
+    "answer": "B",
+    "explanation": "The history shows the wizarding world is aware of Harry and his significance, even if Harry himself doesn't fully understand it yet."
+  }
+]
