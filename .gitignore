@@ -177,3 +177,6 @@ self-rag
 nanoGPT
 src/gutenberg/*.bin
 src/gutenberg/*.json
+
+src/hp
+src/results
