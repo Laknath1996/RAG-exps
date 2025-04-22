@@ -22,7 +22,22 @@ def get_prompt(history, context):
     **Context**:  
     {context}
 
-    Now, generate 15 multiple-choice questions as described above and return your response strictly in JSON format.
+    Now, generate 10 multiple-choice questions as described above. Return your response strictly in the following JSON format.
+
+    ```json
+    [
+        {{
+            "question": "Your question here?",
+            "A": "Option A text",
+            "B": "Option B text",
+            "C": "Option C text",
+            "D": "Option D text"
+            "answer": "C",
+            "explanation": "Explain why C is correct based on the history."
+        }},
+    ...
+    ]
+    ```
     """
     return template.format(history=history, context=context)
 
@@ -34,6 +49,14 @@ def divide_to_chapter(text):
     chapters = [f"{title}\n{body.strip()}" for title, body in zip(titles, splits[1:])]
     return chapters
 
+def extract_questions(generated_str):
+    match = re.search(r'\[.*?\]', generated_str, re.DOTALL)
+    json_str = match.group(0)
+    try:
+        return json.loads(json_str)
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"Error decoding JSON: {e}")
+        return None
 
 if __name__ == "__main__":
 
@@ -76,13 +99,15 @@ if __name__ == "__main__":
 
             response = model.generate_content(prompt)
 
+            q_dict = extract_questions(response.text)
+
             questions.append(
                 {
                     "history_upto": t,
                     "context": k,
-                    "output": response.text
+                    "output": q_dict
                 }
             )
 
             with open(json_path, "w") as f:
-                json.dump(questions, f, indent=2)
+                json.dump(questions, f, indent=4)
