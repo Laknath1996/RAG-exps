@@ -1,4 +1,5 @@
-# TODO: Implement RAG baseline
+# TODO: Implement LORA baseline
+# TODO: Change the variable names such as history_upto, context_chapter, etc. to be more meaningful
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -34,13 +35,50 @@ def read_list_from_json(file_path):
     else:
         raise ValueError("The JSON file does not contain a list.")
     
-def get_prompt(context, question, a, b, c, d):
-    prompt = f"""
-    You are given a context and a multiple-choice question. Choose the **best answer** from the options (A, B, C, D). Respond with only the **letter corresponding to the correct answer**.
+def get_prompt(context, question, a, b, c, d, past_context=None):
+    if past_context is None:
+        prompt = f"""
+        You are given a context and a multiple-choice question. Choose the **best answer** from the options (A, B, C, D). Respond with only the **letter corresponding to the correct answer**.
 
-    Context:
-    {context}
+        Context:
+        {context}
 
+        Question:
+        {question}
+
+        Options:
+        A. {a}
+        B. {b}
+        C. {c}
+        D. {d}
+
+        Answer:
+        """
+    else:
+        prompt = f"""
+        You are given a current context, a retrieved past context and a multiple-choice question. Choose the **best answer** from the options (A, B, C, D). Respond with only the **letter corresponding to the correct answer**.
+
+        Context:
+        {context}
+
+        Past Context:
+        {past_context}
+
+        Question:
+        {question}
+
+        Options:
+        A. {a}
+        B. {b}
+        C. {c}
+        D. {d}
+
+        Answer:
+        """
+    return prompt
+
+def get_rag_query(question, a, b, c, d):
+    query = f"""
     Question:
     {question}
 
@@ -49,10 +87,8 @@ def get_prompt(context, question, a, b, c, d):
     B. {b}
     C. {c}
     D. {d}
-
-    Answer:
     """
-    return prompt
+    return query
 
 def get_model_answer(prompt):
     model_input = tokenizer(prompt, return_tensors="pt").to(1)
@@ -65,9 +101,19 @@ if __name__ == "__main__":
 
     book_path = 'hp/harry_potter_1.txt'
     questions_path = 'hp/harry_potter_1_question_sets.json'
+    database_path = 'hp_vdbs/hp'
+    collection_name = 'book'
+
+    use_rag = False
+    top_k = 3
+
     text = read_text_file(book_path)
     chapters = divide_to_chapter(text)
     question_sets = read_list_from_json(questions_path)
+
+    if use_rag:
+        from rag import RAG
+        rag = RAG(database_path=database_path, collection_name=collection_name)
 
     results = []
 
@@ -88,7 +134,16 @@ if __name__ == "__main__":
                 true_answer = q['answer']
                 a, b, c, d = q['A'], q['B'], q['C'], q['D']
 
-                prompt = get_prompt(context, question, a, b, c, d)
+                if use_rag:
+                    past_context = rag.retrieve(
+                        get_rag_query(question, a, b, c, d), 
+                        scope=[i for i in range(history_upto+1)], 
+                        top_k=top_k
+                    )
+                    past_context = "\n-----\n".join(past_context)
+                    prompt = get_prompt(context, question, a, b, c, d, past_context)
+                else:
+                    prompt = get_prompt(context, question, a, b, c, d)
                 
                 model_answer = get_model_answer(prompt).strip()
 
@@ -110,6 +165,6 @@ if __name__ == "__main__":
         )
 
 
-    filename = 'results/results.json'
+    filename = 'results/v1_results.json'
     with open(filename, 'w') as f:
         json.dump(results, f, indent=4)

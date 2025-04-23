@@ -1,6 +1,6 @@
 ### Todo List
 
-
+* Write the RAG baseline
 * Write the training script
 * ✅ Generate prospective questions using Gemini
 * Use HF tokenizer to tokenizer the gutenberg dataset
