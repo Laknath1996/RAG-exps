@@ -181,3 +181,4 @@ src/gutenberg/*.json
 src/hp
 src/results
 src/hp_vdbs
+src/lora_adapters

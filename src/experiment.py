@@ -3,17 +3,14 @@
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
 
 import json
 import re
 
 import numpy as np
 
-
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", torch_dtype=torch.float16)
-model.to(1)
-
+MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
 
 def divide_to_chapter(text):
     chapter_pattern = r'(?i)^chapter\s+[a-z]+'
@@ -90,26 +87,49 @@ def get_rag_query(question, a, b, c, d):
     """
     return query
 
-def get_model_answer(prompt):
-    model_input = tokenizer(prompt, return_tensors="pt").to(1)
+def get_model_answer(prompt, model, tokenizer):
+    model_input = tokenizer(prompt, return_tensors="pt").to(model.device)
     input_ids_length = model_input['input_ids'].shape[1]
-    model_output = model.generate(**model_input, max_new_tokens=1)
+
+    with torch.no_grad():
+        model_output = model.generate(**model_input, max_new_tokens=1)
+    
     response = tokenizer.decode(model_output[0][input_ids_length:], skip_special_tokens=True)
     return response
 
 if __name__ == "__main__":
 
-    book_path = 'hp/harry_potter_1.txt'
-    questions_path = 'hp/harry_potter_1_question_sets.json'
-    database_path = 'hp_vdbs/hp'
-    collection_name = 'book'
+    import argparse
 
-    use_rag = False
-    top_k = 3
+    parser = argparse.ArgumentParser(description="Run the experiment script with specified parameters.")
 
-    text = read_text_file(book_path)
+    parser.add_argument('--data_path', type=str, default='hp/harry_potter_1.txt', help='Path to the book text file.')
+    parser.add_argument('--questions_path', type=str, default='hp/harry_potter_1_question_sets.json', help='Path to the JSON file containing question sets.')
+    parser.add_argument('--database_path', type=str, default='hp_vdbs/hp', help='Path to the RAG database.')
+    parser.add_argument('--collection_name', type=str, default='book', help='Name of the RAG collection.')
+    parser.add_argument('--use_adapters', action='store_true', help='Flag to use LoRA adapters.')
+    parser.add_argument('--use_rag', action='store_true', help='Flag to use RAG for retrieval.')
+    parser.add_argument('--top_k', type=int, default=3, help='Number of top documents to retrieve with RAG.')
+    parser.add_argument('--results_file', type=str, default='results/results.json', help='Path to save the results JSON file.')
+
+    args = parser.parse_args()
+
+    data_path = args.data_path
+    questions_path = args.questions_path
+    database_path = args.database_path
+    collection_name = args.collection_name
+    use_adapters = args.use_adapters
+    use_rag = args.use_rag
+    top_k = args.top_k
+    results_file = args.results_file
+
+    text = read_text_file(data_path)
     chapters = divide_to_chapter(text)
     question_sets = read_list_from_json(questions_path)
+
+    # load base model and tokenizer
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     if use_rag:
         from rag import RAG
@@ -118,7 +138,7 @@ if __name__ == "__main__":
     results = []
 
     for question_set in question_sets:
-        history_upto = question_set['history_upto']
+        current = question_set['history_upto']
         context_chapter = question_set['context']
         context = chapters[context_chapter]
         q_list = question_set['output']
@@ -126,6 +146,19 @@ if __name__ == "__main__":
         truths = []
         preds = []
         error = None
+
+        if use_adapters:
+            print(f"Loading LoRA adapter for chapter {current}...")
+            model = PeftModel.from_pretrained(base_model, f"lora_adapters/hp1_ch{current}")
+        else:
+            if use_rag:
+                print(f"Loading base model + RAG for chapter {current}...")
+            else:
+                print(f"Loading base model for chapter {current}...")
+            model = base_model
+        
+        model.to(1)
+        model.eval()
 
         if q_list is not None:
             for q in q_list:
@@ -137,7 +170,7 @@ if __name__ == "__main__":
                 if use_rag:
                     past_context = rag.retrieve(
                         get_rag_query(question, a, b, c, d), 
-                        scope=[i for i in range(history_upto+1)], 
+                        scope=[i for i in range(current+1)], 
                         top_k=top_k
                     )
                     past_context = "\n-----\n".join(past_context)
@@ -145,9 +178,9 @@ if __name__ == "__main__":
                 else:
                     prompt = get_prompt(context, question, a, b, c, d)
                 
-                model_answer = get_model_answer(prompt).strip()
+                model_answer = get_model_answer(prompt, model, tokenizer).strip()
 
-                print(f"t = {history_upto}, k = {context_chapter}, True answer: {true_answer}, Model answer: {model_answer}")
+                print(f"t = {current}, k = {context_chapter}, True answer: {true_answer}, Model answer: {model_answer}")
 
                 truths.append(true_answer)
                 preds.append(model_answer)
@@ -156,7 +189,7 @@ if __name__ == "__main__":
         
         results.append(
             {
-                't': history_upto,
+                't': current,
                 'k': context_chapter,
                 'error': error,
                 'truths': truths,
@@ -164,7 +197,5 @@ if __name__ == "__main__":
             }
         )
 
-
-    filename = 'results/v1_results.json'
-    with open(filename, 'w') as f:
+    with open(results_file, 'w') as f:
         json.dump(results, f, indent=4)
