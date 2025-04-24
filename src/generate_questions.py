@@ -1,3 +1,7 @@
+# TODO: Add a condition to check whether the keys are correct
+# keys = ['question', 'A', 'B', 'C', 'D', 'answer', 'explanation']
+# all([list(q.keys()) == keys for q in q_list]) should be true
+
 import json
 import re
 import google.generativeai as genai
