@@ -1,4 +1,3 @@
-# TODO: Implement LORA baseline
 # TODO: Change the variable names such as history_upto, context_chapter, etc. to be more meaningful
 
 import torch
@@ -103,14 +102,22 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Run the experiment script with specified parameters.")
 
-    parser.add_argument('--data_path', type=str, default='hp/harry_potter_1.txt', help='Path to the book text file.')
-    parser.add_argument('--questions_path', type=str, default='hp/harry_potter_1_question_sets.json', help='Path to the JSON file containing question sets.')
+    # data args
+    parser.add_argument('--data_path', type=str, default='hp/hp1.txt', help='Path to the book text file.')
+    parser.add_argument('--questions_path', type=str, default='hp/hp1_questions.json', help='Path to the JSON file containing question sets.')
+    
+    # rag args
     parser.add_argument('--database_path', type=str, default='hp_vdbs/hp', help='Path to the RAG database.')
     parser.add_argument('--collection_name', type=str, default='book', help='Name of the RAG collection.')
+    parser.add_argument('--top_k', type=int, default=3, help='Number of top documents to retrieve with RAG.')
+    
+    # experiment args
     parser.add_argument('--use_adapters', action='store_true', help='Flag to use LoRA adapters.')
     parser.add_argument('--use_rag', action='store_true', help='Flag to use RAG for retrieval.')
-    parser.add_argument('--top_k', type=int, default=3, help='Number of top documents to retrieve with RAG.')
+    
+    # other args
     parser.add_argument('--results_file', type=str, default='results/results.json', help='Path to save the results JSON file.')
+    parser.add_argument('--device', type=int, default=1, help='Device ID to use for the model.')
 
     args = parser.parse_args()
 
@@ -122,7 +129,9 @@ if __name__ == "__main__":
     use_rag = args.use_rag
     top_k = args.top_k
     results_file = args.results_file
+    device = args.device
 
+    # get whole text, chapters, and questions
     text = read_text_file(data_path)
     chapters = divide_to_chapter(text)
     question_sets = read_list_from_json(questions_path)
@@ -138,14 +147,11 @@ if __name__ == "__main__":
     results = []
 
     for question_set in question_sets:
-        current = question_set['history_upto']
-        context_chapter = question_set['context']
-        context = chapters[context_chapter]
-        q_list = question_set['output']
 
-        truths = []
-        preds = []
-        error = None
+        current = question_set['history_upto']      # current chapter_id (history = 0...chapter_id)
+        context_chapter = question_set['context']   # future chapter_id that will be used as context
+        context = chapters[context_chapter]         # context (= chapter content)
+        q_list = question_set['output']             # set of questions based on the context and history
 
         if use_adapters:
             print(f"Loading LoRA adapter for chapter {current}...")
@@ -157,35 +163,37 @@ if __name__ == "__main__":
                 print(f"Loading base model for chapter {current}...")
             model = base_model
         
-        model.to(1)
+        model.to(device)
         model.eval()
 
-        if q_list is not None:
-            for q in q_list:
+        truths = []
+        preds = []
 
-                question = q['question']
-                true_answer = q['answer']
-                a, b, c, d = q['A'], q['B'], q['C'], q['D']
+        for q in q_list:
 
-                if use_rag:
-                    past_context = rag.retrieve(
-                        get_rag_query(question, a, b, c, d), 
-                        scope=[i for i in range(current+1)], 
-                        top_k=top_k
-                    )
-                    past_context = "\n-----\n".join(past_context)
-                    prompt = get_prompt(context, question, a, b, c, d, past_context)
-                else:
-                    prompt = get_prompt(context, question, a, b, c, d)
-                
-                model_answer = get_model_answer(prompt, model, tokenizer).strip()
+            question = q['question']
+            true_answer = q['answer']
+            a, b, c, d = q['A'], q['B'], q['C'], q['D']
 
-                print(f"t = {current}, k = {context_chapter}, True answer: {true_answer}, Model answer: {model_answer}")
+            if use_rag:
+                past_context = rag.retrieve(
+                    get_rag_query(question, a, b, c, d), 
+                    scope=[i for i in range(current+1)], 
+                    top_k=top_k
+                )
+                past_context = "\n-----\n".join(past_context)
+                prompt = get_prompt(context, question, a, b, c, d, past_context)
+            else:
+                prompt = get_prompt(context, question, a, b, c, d)
+            
+            model_answer = get_model_answer(prompt, model, tokenizer).strip()
 
-                truths.append(true_answer)
-                preds.append(model_answer)
+            print(f"t = {current}, k = {context_chapter}, True answer: {true_answer}, Model answer: {model_answer}")
 
-            error = np.mean(np.array(truths) != np.array(preds))
+            truths.append(true_answer)
+            preds.append(model_answer)
+
+        error = np.mean(np.array(truths) != np.array(preds))
         
         results.append(
             {

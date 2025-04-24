@@ -15,6 +15,6 @@
 
 ### Checklist
 
-* Generated questions
-* RAG 
+* ✅ Generated questions
+* ✅ RAG 
 * Variable names

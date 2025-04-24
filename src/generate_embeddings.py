@@ -53,11 +53,23 @@ def mean_pooling(token_embeddings, mask):
 
 if __name__ == "__main__":
 
-    book_path = 'hp/harry_potter_1.txt'
-    database_path = 'hp_vdbs/hp'
-    collection_name = 'book'
-    chunk_size = 5
-    device = 1
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate embeddings for a book and store them in a database.")
+
+    parser.add_argument("--book_path", type=str, default='hp/hp1.txt', help="Path to the book text file.")
+    parser.add_argument("--database_path", type=str, default='hp_vdbs', help="Path to the database directory.")
+    parser.add_argument("--collection_name", type=str, default='book', help="Name of the collection in the database.")
+    parser.add_argument("--chunk_size", type=int, default=5, help="Number of sentences per chunk.")
+    parser.add_argument("--device", type=int, default=1, help="Device ID to run the model on (e.g., 0 for GPU 0).")
+
+    args = parser.parse_args()
+
+    book_path = args.book_path
+    database_path = args.database_path
+    collection_name = args.collection_name
+    chunk_size = args.chunk_size
+    device = args.device
 
     # load the book and get the chapters
     text = read_text_file(book_path)

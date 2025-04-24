@@ -70,8 +70,9 @@ def extract_questions(generated_str):
 if __name__ == "__main__":
 
     import argparse
+    
     parser = argparse.ArgumentParser(description="Generate questions from a book.")
-    parser.add_argument("--path", type=str, default="hp/harry_potter_1.txt", help="Path to the book .txt file.")
+    parser.add_argument("--path", type=str, default="hp/hp1.txt", help="Path to the book .txt file.")
     args = parser.parse_args()
 
     book_path = args.path

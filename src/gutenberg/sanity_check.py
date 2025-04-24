@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pprint import pprint
 import matplotlib.pyplot as plt
 
-from utils import Library
+from gutenberg.utils import Library
 
 batch_size = 8
 num_epochs = 5

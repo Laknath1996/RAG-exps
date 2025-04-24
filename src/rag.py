@@ -29,6 +29,7 @@ class RAG:
         Get the embedding of a text
         """
         self.embedding_model.to(self.device)
+        self.embedding_model.eval()
         inputs = self.embedding_tokenizer([text], padding=True, truncation=True, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.embedding_model(**inputs)

@@ -6,7 +6,7 @@ import numpy as np
 import json
 from tqdm import tqdm
 
-from utils import Library
+from gutenberg.utils import Library
 
 os.path.join(os.path.dirname(__file__), 'gutenberg')
 
