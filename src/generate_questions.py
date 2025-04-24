@@ -49,6 +49,11 @@ def divide_to_chapter(text):
     chapters = [f"{title}\n{body.strip()}" for title, body in zip(titles, splits[1:])]
     return chapters
 
+def preprocess_text(text):
+    text = re.sub(r"^(CHAPTER \w+\n)(.*\n\n)", "", text, flags=re.MULTILINE)
+    text = text.strip()
+    return text
+
 def extract_questions(generated_str):
     match = re.search(r'\[.*?\]', generated_str, re.DOTALL)
     json_str = match.group(0)
@@ -62,11 +67,11 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser(description="Generate questions from a book.")
-    parser.add_argument("--path", type=str, default="hp/harry_potter_2.txt", help="Path to the book .txt file.")
+    parser.add_argument("--path", type=str, default="hp/harry_potter_1.txt", help="Path to the book .txt file.")
     args = parser.parse_args()
 
     book_path = args.path
-    json_path = book_path.replace(".txt", "_question_sets.json")
+    json_path = book_path.replace(".txt", "_questions.json")
 
     # Configure Google Generative AI API
     GOOGLE_API_KEY = "AIzaSyCbk0GN0dnimcDIzfmOK8TQKkbEtiBmG_4"
@@ -78,10 +83,11 @@ if __name__ == "__main__":
     # Load the book
     with open(book_path, 'r', encoding='utf-8') as file:
         text = file.read()
-    print("Text successfully read from harry_potter_1.txt")
+    print(f"Text successfully read from {book_path}")
 
     # Get individual chapters
     chapters = divide_to_chapter(text)
+    chapters = [preprocess_text(chapter) for chapter in chapters]
     T = len(chapters)
     print(f"Number of chapters: {T}")
 
@@ -97,15 +103,19 @@ if __name__ == "__main__":
 
             print(f"t={t}, k={k}, total tokens : {model.count_tokens(prompt)}")
 
-            response = model.generate_content(prompt)
-
-            q_dict = extract_questions(response.text)
+            success = False
+            while not success:
+                response = model.generate_content(prompt)
+                q_list = extract_questions(response.text)
+                if q_list is not None and len(q_list) == 10:
+                    success = True
+                    print("Successfully generated 10 questions.")
 
             questions.append(
                 {
                     "history_upto": t,
                     "context": k,
-                    "output": q_dict
+                    "output": q_list
                 }
             )
 

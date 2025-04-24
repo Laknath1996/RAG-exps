@@ -1,7 +1,7 @@
 ### Todo List
 
-* Write the RAG baseline
-* Write the training script
+* ✅ Write the RAG baseline
+* ✅ Write the finetuning script
 * ✅ Generate prospective questions using Gemini
 * Use HF tokenizer to tokenizer the gutenberg dataset
 * configure the GPT2 model according to https://huggingface.co/learn/llm-course/en/chapter7/6
@@ -12,3 +12,9 @@
 * ✅ write perplexity script
 * ✅ Do a full run
 * ✅ Make a plot
+
+### Checklist
+
+* Generated questions
+* RAG 
+* Variable names
