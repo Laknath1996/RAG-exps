@@ -11,7 +11,7 @@ def mean_pooling(token_embeddings, mask):
     return sentence_embeddings
 
 class RAG:
-    def __init__(self, database_path, collection_name, embedding_model="facebook/contriever", device=1):
+    def __init__(self, database_path, collection_name, embedding_model="facebook/contriever-msmarco", device=1):
         """
         Initialize the RAG system
         """       

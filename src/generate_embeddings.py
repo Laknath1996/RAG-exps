@@ -9,7 +9,7 @@ import chromadb
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-embedding_model = "facebook/contriever"
+embedding_model = "facebook/contriever-msmarco"
 embedding_tokenizer = AutoTokenizer.from_pretrained(embedding_model)
 embedding_model = AutoModel.from_pretrained(embedding_model)
 
@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
     # load the model to device
     embedding_model.to(device)
+    embedding_model.eval()
 
     # configure the database
     client = chromadb.PersistentClient(path=database_path)
