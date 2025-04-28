@@ -15,6 +15,9 @@
 
 ### Checklist
 
+* "Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered." -- set "use_sliding_window"  to False
+(see https://github.com/huggingface/transformers/pull/36316)
+* Check for which modules LORA is applied (https://huggingface.co/docs/peft/en/package_reference/lora)
 * ✅ Generated questions
 * ✅ RAG 
-* Variable names
+* ✅ Variable names (alright for now)

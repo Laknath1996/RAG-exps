@@ -6,6 +6,7 @@ from peft import PeftModel
 
 import json
 import re
+import os
 
 import numpy as np
 
@@ -132,6 +133,7 @@ if __name__ == "__main__":
     device = args.device
 
     # get whole text, chapters, and questions
+    book_name = os.path.basename(data_path).split('.')[0]
     text = read_text_file(data_path)
     chapters = divide_to_chapter(text)
     question_sets = read_list_from_json(questions_path)
@@ -155,7 +157,7 @@ if __name__ == "__main__":
 
         if use_adapters:
             print(f"Loading LoRA adapter for chapter {current}...")
-            model = PeftModel.from_pretrained(base_model, f"lora_adapters/hp1_ch{current}")
+            model = PeftModel.from_pretrained(base_model, f"lora_adapters/{book_name}_ch{current}")
         else:
             if use_rag:
                 print(f"Loading base model + RAG for chapter {current}...")

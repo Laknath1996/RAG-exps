@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fine-tune a language model with LoRA.")
 
     # dataset args
-    parser.add_argument("--dataset_path", type=str, default='hp/harry_potter_1.txt', help="Path to the training dataset.")
+    parser.add_argument("--dataset_path", type=str, default='hp/hp1.txt', help="Path to the training dataset.")
     parser.add_argument("--current", type=int, default=3, help="Currently completed chapter.")
     parser.add_argument("--block_size", type=int, default=128, help="Size of text blocks for training.")
 
@@ -84,7 +84,8 @@ if __name__ == "__main__":
     device = args.device
 
     print(f"Finetuning on chapters up to {current}...")
-    output_dir = f"lora_adapters/hp1_ch{current}"
+    book_name = os.path.basename(dataset_path).split('.')[0]
+    output_dir = f"lora_adapters/{book_name}_ch{current}"
 
     # Set seed for reproducibility
     torch.manual_seed(seed)

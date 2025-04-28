@@ -6,6 +6,8 @@ import json
 import re
 import google.generativeai as genai
 
+KEYS = ['question', 'A', 'B', 'C', 'D', 'answer', 'explanation']
+
 def get_prompt(history, context):
     template = """
     You are reading a book. The portion you have already read is referred to as the **history**, and a new **context** (an excerpt from a later part of the book) is provided. 
@@ -113,8 +115,9 @@ if __name__ == "__main__":
                 response = model.generate_content(prompt)
                 q_list = extract_questions(response.text)
                 if q_list is not None and len(q_list) == 10:
-                    success = True
-                    print("Successfully generated 10 questions.")
+                    if all([list(q.keys()) == KEYS for q in q_list]):
+                        success = True
+                        print("Successfully generated 10 questions.")
 
             questions.append(
                 {
