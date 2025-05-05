@@ -104,12 +104,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the experiment script with specified parameters.")
 
     # data args
-    parser.add_argument('--data_path', type=str, default='hp/hp1.txt', help='Path to the book text file.')
-    parser.add_argument('--questions_path', type=str, default='hp/hp1_questions.json', help='Path to the JSON file containing question sets.')
+    parser.add_argument('--chapters_path', type=str, default='hp/hp1_2_chapters.json', help='Path to the book text file.')
+    parser.add_argument('--questions_path', type=str, default='hp/hp1_2_questions.json', help='Path to the JSON file containing question sets.')
     
     # rag args
     parser.add_argument('--database_path', type=str, default='hp_vdbs/hp', help='Path to the RAG database.')
-    parser.add_argument('--collection_name', type=str, default='book', help='Name of the RAG collection.')
+    parser.add_argument('--collection_name', type=str, default='book1_2', help='Name of the RAG collection.')
     parser.add_argument('--top_k', type=int, default=3, help='Number of top documents to retrieve with RAG.')
     
     # experiment args
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    data_path = args.data_path
+    chapters_path = args.chapters_path
     questions_path = args.questions_path
     database_path = args.database_path
     collection_name = args.collection_name
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     device = args.device
 
     # get whole text, chapters, and questions
-    book_name = os.path.basename(data_path).split('.')[0]
-    text = read_text_file(data_path)
-    chapters = divide_to_chapter(text)
+    book_name = os.path.basename(chapters_path).split('.')[0].replace('_chapters', '')
+    with open(chapters_path) as f:
+        chapters = json.load(f)
     question_sets = read_list_from_json(questions_path)
 
     # load base model and tokenizer

@@ -1,6 +1,6 @@
 #!/bin/bash
 
 uv run generate_embeddings.py \
-    --book_path=hp/hp2.txt \
-    --database_path=hp_vdbs \
-    --collection_name=book2
+    --chapters_path=hp/hp1_2_chapters.json \
+    --database_path=hp_vdbs/hp \
+    --collection_name=book1_2

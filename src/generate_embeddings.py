@@ -57,23 +57,23 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Generate embeddings for a book and store them in a database.")
 
-    parser.add_argument("--book_path", type=str, default='hp/hp1.txt', help="Path to the book text file.")
-    parser.add_argument("--database_path", type=str, default='hp_vdbs', help="Path to the database directory.")
-    parser.add_argument("--collection_name", type=str, default='book', help="Name of the collection in the database.")
+    parser.add_argument("--chapters_path", type=str, default='hp/hp1_2_chapters.json', help="Path to the json file containing book chapters.")
+    parser.add_argument("--database_path", type=str, default='hp_vdbs/hp', help="Path to the database directory.")
+    parser.add_argument("--collection_name", type=str, default='book1_2', help="Name of the collection in the database.")
     parser.add_argument("--chunk_size", type=int, default=5, help="Number of sentences per chunk.")
     parser.add_argument("--device", type=int, default=1, help="Device ID to run the model on (e.g., 0 for GPU 0).")
 
     args = parser.parse_args()
 
-    book_path = args.book_path
+    chapters_path = args.chapters_path
     database_path = args.database_path
     collection_name = args.collection_name
     chunk_size = args.chunk_size
     device = args.device
 
-    # load the book and get the chapters
-    text = read_text_file(book_path)
-    chapters = divide_to_chapter(text)
+    # load the chapters
+    with open(chapters_path) as f:
+        chapters = json.load(f)
 
     # load the model to device
     embedding_model.to(device)
@@ -95,10 +95,6 @@ if __name__ == "__main__":
 
     for chapter_id, chapter in enumerate(chapters):
         print(f"Processing chapter {chapter_id + 1}...")
-
-        # remove the chapter title and white spaces
-        chapter = re.sub(r"^(CHAPTER \w+\n)(.*\n\n)", "", chapter, flags=re.MULTILINE)
-        chapter = chapter.strip()
 
         # create chunks based on sentences
         chunks = character_chunking(chapter, chunk_size=1000, overlap=200)

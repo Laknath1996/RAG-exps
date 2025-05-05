@@ -1,3 +1,5 @@
 #!/bin/bash
 
-uv run generate_questions.py --path=hp/hp2.txt
+uv run generate_questions.py \
+    --chapters_path=hp/hp1_2_chapters.json \
+    --questions_path=hp/hp1_2_questions.json

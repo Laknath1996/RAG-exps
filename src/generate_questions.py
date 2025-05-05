@@ -74,11 +74,12 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Generate questions from a book.")
-    parser.add_argument("--path", type=str, default="hp/hp1.txt", help="Path to the book .txt file.")
+    parser.add_argument("--chapters_path", type=str, default="hp/hp1_2_chapters.json", help="Path to json file containing book chapters.")
+    parser.add_argument("--questions_path", type=str, default="hp/hp1_2_questions.json", help="Path to json file that will contain the questions.")
     args = parser.parse_args()
 
-    book_path = args.path
-    json_path = book_path.replace(".txt", "_questions.json")
+    chapters_path = args.chapters_path
+    questions_path = args.questions_path
 
     # Configure Google Generative AI API
     GOOGLE_API_KEY = "AIzaSyCbk0GN0dnimcDIzfmOK8TQKkbEtiBmG_4"
@@ -87,14 +88,9 @@ if __name__ == "__main__":
     # Load the model
     model = genai.GenerativeModel('gemini-1.5-flash-8b')
 
-    # Load the book
-    with open(book_path, 'r', encoding='utf-8') as file:
-        text = file.read()
-    print(f"Text successfully read from {book_path}")
-
     # Get individual chapters
-    chapters = divide_to_chapter(text)
-    chapters = [preprocess_text(chapter) for chapter in chapters]
+    with open(chapters_path) as f:
+        chapters = json.load(f)
     T = len(chapters)
     print(f"Number of chapters: {T}")
 
@@ -127,5 +123,5 @@ if __name__ == "__main__":
                 }
             )
 
-            with open(json_path, "w") as f:
+            with open(questions_path, "w") as f:
                 json.dump(questions, f, indent=4)
