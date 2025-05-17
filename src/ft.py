@@ -5,6 +5,7 @@ from peft import LoraConfig, get_peft_model
 from tqdm import tqdm
 import os
 import re
+import json
 
 
 def divide_to_chapter(text):
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fine-tune a language model with LoRA.")
 
     # dataset args
-    parser.add_argument("--dataset_path", type=str, default='hp/hp1.txt', help="Path to the training dataset.")
+    parser.add_argument('--chapters_path', type=str, default='hp/hp1_2_chapters.json', help='Path to the book text file.')
     parser.add_argument("--current", type=int, default=3, help="Currently completed chapter.")
     parser.add_argument("--block_size", type=int, default=128, help="Size of text blocks for training.")
 
@@ -63,6 +64,9 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", type=int, default=100, help="Number of warmup steps for the scheduler.")
     parser.add_argument("--device", type=str, default="cuda:1", help="Device to use for training (e.g., 'cuda:0', 'cpu').")
 
+    # checkpoint args
+    parser.add_argument("--save_at_each_epoch", action='store_true', help="Flag to save model checkpoint at each epoch.")
+
     # seed
     parser.add_argument("--seed", type=int, default=1996, help="Random seed for reproducibility.")
 
@@ -73,7 +77,7 @@ if __name__ == "__main__":
     lora_rank = args.lora_rank
     lora_alpha = args.lora_alpha
     lora_dropout = args.lora_dropout
-    dataset_path = args.dataset_path
+    chapters_path = args.chapters_path
     block_size = args.block_size
     batch_size = args.batch_size
     learning_rate = args.learning_rate
@@ -82,10 +86,13 @@ if __name__ == "__main__":
     gradient_accumulation_steps = args.gradient_accumulation_steps
     seed = args.seed
     device = args.device
+    save_at_each_epoch = args.save_at_each_epoch
 
     print(f"Finetuning on chapters up to {current}...")
-    book_name = os.path.basename(dataset_path).split('.')[0]
-    output_dir = f"lora_adapters/{book_name}_ch{current}"
+    book_name = os.path.basename(chapters_path).split('.')[0].replace('_chapters', '')
+    with open(chapters_path) as f:
+        chapters = json.load(f)
+    output_dir = f"lora_adapters/{book_name}/{book_name}_ch{current}"
 
     # Set seed for reproducibility
     torch.manual_seed(seed)
@@ -97,10 +104,8 @@ if __name__ == "__main__":
         tokenizer.pad_token = tokenizer.eos_token
 
     # Prepare the text string for training
-    text = read_text_file(dataset_path)
-    chapters = divide_to_chapter(text)[:current+1] # get all the chapters from 0 to current including current
-    cleaned_chapters = [preprocess_text(chapter) for chapter in chapters]
-    train_text = "\n\n".join(cleaned_chapters)
+    train_chapters = chapters[:current+1]
+    train_text = "\n\n".join(train_chapters)
 
     train_dataset = TextDataset(tokenizer, train_text, block_size)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
@@ -154,6 +159,11 @@ if __name__ == "__main__":
             progress_bar.set_postfix({"loss": epoch_loss / (step + 1)})
 
         print(f"Epoch {epoch+1} Loss: {epoch_loss / len(train_dataloader)}")
+
+        # save model checkpoint at each epoch
+        if save_at_each_epoch:
+            model.save_pretrained(os.path.join(output_dir, f"checkpoint-{epoch+1}"))
+
 
     # Save the adapter
     model.save_pretrained(output_dir)

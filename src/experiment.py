@@ -115,6 +115,9 @@ if __name__ == "__main__":
     # experiment args
     parser.add_argument('--use_adapters', action='store_true', help='Flag to use LoRA adapters.')
     parser.add_argument('--use_rag', action='store_true', help='Flag to use RAG for retrieval.')
+
+    # adapter args
+    parser.add_argument('--ckpt_id', type=str, default='None', help='Checkpoint ID for the LoRA adapter.')
     
     # other args
     parser.add_argument('--results_file', type=str, default='results/results.json', help='Path to save the results JSON file.')
@@ -127,6 +130,7 @@ if __name__ == "__main__":
     database_path = args.database_path
     collection_name = args.collection_name
     use_adapters = args.use_adapters
+    ckpt_id = args.ckpt_id
     use_rag = args.use_rag
     top_k = args.top_k
     results_file = args.results_file
@@ -157,7 +161,11 @@ if __name__ == "__main__":
 
         if use_adapters:
             print(f"Loading LoRA adapter for chapter {current}...")
-            model = PeftModel.from_pretrained(base_model, f"lora_adapters/{book_name}_ch{current}")
+            adapter_path = f"lora_adapters/{book_name}/{book_name}_ch{current}"
+            if ckpt_id != 'None':
+                adapter_path += f"/checkpoint-{ckpt_id}"
+            print(f"Loading from {adapter_path}...")
+            model = PeftModel.from_pretrained(base_model, adapter_path)
         else:
             if use_rag:
                 print(f"Loading base model + RAG for chapter {current}...")
