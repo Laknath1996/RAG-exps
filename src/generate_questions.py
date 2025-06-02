@@ -97,14 +97,12 @@ if __name__ == "__main__":
         default=-1,
         help="Scope of the chapters to process. Allowed values: -1 (all next chapters), 1 (only the next chapter)."
     )
-    parser.add_argument("--pause_iter", action="store_true", help="Pause after each iteration if set.")
     args = parser.parse_args()
 
     chapters_path = args.chapters_path
     questions_path = args.questions_path
     num_questions = args.num_questions
     scope = args.scope
-    pause_iter = args.pause_iter
 
     # Configure Google Generative AI API
     GOOGLE_API_KEY = "AIzaSyCbk0GN0dnimcDIzfmOK8TQKkbEtiBmG_4"
