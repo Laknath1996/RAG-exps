@@ -7,6 +7,7 @@ from peft import PeftModel
 import json
 import re
 import os
+from collections import deque
 
 import numpy as np
 
@@ -112,12 +113,13 @@ if __name__ == "__main__":
     parser.add_argument('--collection_name', type=str, default='book1_2', help='Name of the RAG collection.')
     parser.add_argument('--top_k', type=int, default=3, help='Number of top documents to retrieve with RAG.')
     
-    # experiment args
+    # LoRA adapter args
     parser.add_argument('--use_adapters', action='store_true', help='Flag to use LoRA adapters.')
-    parser.add_argument('--use_rag', action='store_true', help='Flag to use RAG for retrieval.')
-
-    # adapter args
     parser.add_argument('--ckpt_id', type=str, default='None', help='Checkpoint ID for the LoRA adapter.')
+    
+    # RAG args
+    parser.add_argument('--use_rag', action='store_true', help='Flag to use RAG for retrieval.')
+    parser.add_argument('--rag_memory', type=int, default=-1, help='Memory size (in terms of chapters) for RAG. Default is -1 (no limit).')
     
     # other args
     parser.add_argument('--results_file', type=str, default='results/results.json', help='Path to save the results JSON file.')
@@ -132,6 +134,7 @@ if __name__ == "__main__":
     use_adapters = args.use_adapters
     ckpt_id = args.ckpt_id
     use_rag = args.use_rag
+    rag_memory = args.rag_memory
     top_k = args.top_k
     results_file = args.results_file
     device = args.device
@@ -169,6 +172,9 @@ if __name__ == "__main__":
         else:
             if use_rag:
                 print(f"Loading base model + RAG for chapter {current}...")
+                scope = deque(maxlen=rag_memory) if rag_memory > 0 else deque()
+                scope.extend(range(current + 1))
+                print(f"Retrieving past context for chapter {current} with scope: {list(scope)}")
             else:
                 print(f"Loading base model for chapter {current}...")
             model = base_model
@@ -188,7 +194,7 @@ if __name__ == "__main__":
             if use_rag:
                 past_context = rag.retrieve(
                     get_rag_query(question, a, b, c, d), 
-                    scope=[i for i in range(current+1)], 
+                    scope=list(scope), 
                     top_k=top_k
                 )
                 past_context = "\n-----\n".join(past_context)

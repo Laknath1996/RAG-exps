@@ -22,8 +22,20 @@ QUESTIONS_PATH="hp/hp1_2_instant_questions.json"
 #     --questions_path=$QUESTIONS_PATH \
 #     --results_file=results/rag.json
 
+# uv run experiment.py \
+#     --use_adapters \
+#     --ckpt_id=1 \
+#     --questions_path=$QUESTIONS_PATH \
+#     --results_file=results/ft_1.json
+
 uv run experiment.py \
-    --use_adapters \
-    --ckpt_id=1 \
+    --use_rag \
+    --rag_memory=5 \
     --questions_path=$QUESTIONS_PATH \
-    --results_file=results/ft_1.json
+    --results_file=results/rag_limited_5.json
+
+uv run experiment.py \
+    --use_rag \
+    --rag_memory=-1 \
+    --questions_path=$QUESTIONS_PATH \
+    --results_file=results/rag_unlimited.json
