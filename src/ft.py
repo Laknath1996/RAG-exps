@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torch.nn.utils import clip_grad_norm_
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 from peft import LoraConfig, get_peft_model
 from tqdm import tqdm
@@ -52,16 +53,15 @@ if __name__ == "__main__":
 
     # LORA args
     parser.add_argument("--lora_alpha", type=int, default=32, help="Alpha parameter for LoRA.")
-    parser.add_argument("--lora_dropout", type=float, default=0.1, help="Dropout rate for LoRA.")
+    parser.add_argument("--lora_dropout", type=float, default=0.05, help="Dropout rate for LoRA.")
     parser.add_argument("--lora_rank", type=int, default=8, help="Rank for LoRA.")
 
     # training args
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training.") 
-    parser.add_argument("--gradient_accumulation_steps", type=int, default=8, help="Steps for gradient accumulation.")
-    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for the optimizer.")
+    parser.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate for the optimizer.")
     parser.add_argument("--model_name", type=str, default="Qwen/Qwen2.5-1.5B-Instruct", help="Base model name or path.")
-    parser.add_argument("--num_epochs", type=int, default=3, help="Number of training epochs.")
-    parser.add_argument("--warmup_steps", type=int, default=100, help="Number of warmup steps for the scheduler.")
+    parser.add_argument("--num_epochs", type=int, default=5, help="Number of training epochs.")
+    parser.add_argument("--warmup_steps", type=int, default=20, help="Number of warmup steps for the scheduler.")
     parser.add_argument("--device", type=str, default="cuda:1", help="Device to use for training (e.g., 'cuda:0', 'cpu').")
 
     # checkpoint args
@@ -83,7 +83,6 @@ if __name__ == "__main__":
     learning_rate = args.learning_rate
     num_epochs = args.num_epochs
     warmup_steps = args.warmup_steps
-    gradient_accumulation_steps = args.gradient_accumulation_steps
     seed = args.seed
     device = args.device
     save_at_each_epoch = args.save_at_each_epoch
@@ -92,7 +91,7 @@ if __name__ == "__main__":
     book_name = os.path.basename(chapters_path).split('.')[0].replace('_chapters', '')
     with open(chapters_path) as f:
         chapters = json.load(f)
-    output_dir = f"lora_adapters/{book_name}/{book_name}_ch{current}"
+    output_dir = f"lora_adapters/{book_name}_new-1/{book_name}_ch{current}"
 
     # Set seed for reproducibility
     torch.manual_seed(seed)
@@ -111,7 +110,11 @@ if __name__ == "__main__":
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 
     # Model and LoRA Setup
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype=torch.float16,
+        attn_implementation="flash_attention_2"
+    )
 
     lora_config = LoraConfig(
         r=lora_rank,
@@ -126,7 +129,7 @@ if __name__ == "__main__":
 
     # Optimizer and Scheduler
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-    total_steps = len(train_dataloader) * num_epochs // gradient_accumulation_steps
+    total_steps = len(train_dataloader) * num_epochs
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
 
     # Training Loop
@@ -146,15 +149,15 @@ if __name__ == "__main__":
 
             outputs = model(inputs, labels=labels)
             loss = outputs.loss
-            loss = loss / gradient_accumulation_steps # Accumulate gradients
 
+            optimizer.zero_grad()
             loss.backward()
 
-            if (step + 1) % gradient_accumulation_steps == 0:
-                optimizer.step()
-                scheduler.step()
-                optimizer.zero_grad()
+            clip_grad_norm_(model.parameters(), 1.0)
 
+            optimizer.step()
+            scheduler.step()
+                
             epoch_loss += loss.item()
             progress_bar.set_postfix({"loss": epoch_loss / (step + 1)})
 
@@ -163,7 +166,6 @@ if __name__ == "__main__":
         # save model checkpoint at each epoch
         if save_at_each_epoch:
             model.save_pretrained(os.path.join(output_dir, f"checkpoint-{epoch+1}"))
-
 
     # Save the adapter
     model.save_pretrained(output_dir)
