@@ -94,7 +94,7 @@ if __name__ == "__main__":
     scope = args.scope
 
     # Configure Google Generative AI API
-    GOOGLE_API_KEY = "AIzaSyCh4K2xZV9209xmJgjwxF-60xHdpaKU8vY"
+    GOOGLE_API_KEY = ""
     genai.configure(api_key=GOOGLE_API_KEY)
 
     # Load the model
